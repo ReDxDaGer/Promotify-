@@ -1,12 +1,11 @@
-from backend.main import app
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+
+db = SQLAlchemy()
 
 convention = {
     "ix": 'ix_%(column_0_label)s',
@@ -19,5 +18,4 @@ convention = {
 Base = declarative_base(metadata=MetaData(naming_convention=convention))
 
 def init_db():
-    with app.app_context():
-        db.create_all()
+    db.create_all()
