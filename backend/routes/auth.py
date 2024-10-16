@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from backend.database.database import db
-from backend.models.model import User , Influencer ,Sponsor
+from database.database import db
+from models.model import User, Influencer, Sponsor
 import jwt
 import datetime
 import os
@@ -10,7 +10,7 @@ load_dotenv()
 
 auth = Blueprint('auth', __name__)
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = "your_secret_key"
 
 def generate_token(user):
     payload = {
@@ -23,8 +23,10 @@ def decode_token(token):
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
-        return 'Signature expired. Please log in again.'
-    
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
 @auth.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -41,8 +43,8 @@ def signup():
     if user:
         return jsonify({'error': 'User already exists'}), 400
     
-    hashed_password = generate_password_hash(password , method = "sha256")
-    new_user = User(username=username, email=email, is_influencer=(role == 'influencer'), is_sponsor=(role == 'sponsor'))
+    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+    new_user = User(username=username, email=email, password=hashed_password, is_influencer=(role == 'influencer'), is_sponsor=(role == 'sponsor'))
     db.session.add(new_user)
     db.session.commit()
 
@@ -56,6 +58,7 @@ def signup():
     db.session.commit()
 
     return jsonify({'message': 'User created successfully'}), 201
+
 
 @auth.route('/login', methods=['POST'])
 def login():
@@ -74,13 +77,15 @@ def login():
     token = generate_token(user)
 
     return jsonify({'message': 'Login successful', 'token': token})
-    
+
 @auth.route('/profile', methods=['GET'])
 def profile():
-    token = request.headers.get('Authorization').split()[1] if 'Authorization' in request.headers else None
+    auth_header = request.headers.get('Authorization')
 
-    if not token:
-        return jsonify({'message': 'Token is missing'}), 403
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'message': 'Token is missing or invalid format'}), 403
+
+    token = auth_header.split()[1]
 
     data = decode_token(token)
     if not data:
