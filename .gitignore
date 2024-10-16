@@ -1,0 +1,4 @@
+env
+backend/instance
+backend/models/__pycache__
+backend/routes/__pycache__
