@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from database.database import db, init_db  # Import database instance and init function
-from routes.auth import auth  # Import the Blueprint correctly
+from database.database import db, init_db  
+from routes.auth import auth  
 
 app = Flask(__name__)
 
